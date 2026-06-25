@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +52,7 @@ import com.example.house_rental_app.data.SharedViewModel
 import com.example.house_rental_app.data.UserViewModel
 import com.example.house_rental_app.entity.HouseEntity
 import com.example.house_rental_app.navigation.ROUTE_MY_LISTINGS
+import com.example.house_rental_app.R
 import kotlinx.coroutines.launch
 import java.io.FileOutputStream
 
@@ -62,7 +64,6 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
     val userViewModel: UserViewModel = viewModel()
     val user by userViewModel.currentUser.observeAsState()
     val houseViewModel : HouseViewModel = viewModel()
-    // State for each property detail
     var imageId by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var leaseAvailability by remember { mutableStateOf("") }
@@ -74,35 +75,8 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
 
     Log.println(Log.INFO, "Dengey", userId.value.toString())
     var imagePaths by remember { mutableStateOf<List<String>>(emptyList()) }
-//    val imageUris: MutableList<String> = mutableListOf()
     var imageUris by remember { mutableStateOf<List<String>>(emptyList()) }
 
-//    val pickImagesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//        if (result.resultCode == Activity.RESULT_OK) {
-//
-//            val data: Intent? = result.data
-//            if (data?.clipData != null) {
-//                // Handle multiple selected images
-//                val clipData = data.clipData!!
-//                for (i in 0 until clipData.itemCount) {
-//                    val imageUri = clipData.getItemAt(i).uri
-//                    imagePath = saveImageToInternalStorage(context, imageUri) // Save each image and get its path
-//
-//                    imageUris += (imageUri.toString())
-//                }
-//            } else if (data?.data != null) {
-//                // Handle single image selection
-//                data.data?.let { uri ->
-//                    imagePath = saveImageToInternalStorage(context, uri) // Save the image and get its path
-//                    imageUris += (uri.toString())
-//                }
-//            }
-//            imageCount = imageUris.size
-//
-//            // Now imageUris contains all the selected images' URIs.
-//            // Update your UI or database as needed.
-//        }
-//    }
     val pickImagesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data: Intent? = result.data
@@ -113,13 +87,13 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
                 val clipData = data.clipData!!
                 for (i in 0 until clipData.itemCount) {
                     val imageUri = clipData.getItemAt(i).uri
-                    val savedImagePath = saveImageToInternalStorage(context, imageUri) // Save each image and get its path
+                    val savedImagePath = saveImageToInternalStorage(context, imageUri)
                     newImagePaths.add(savedImagePath)
                 }
             } else if (data?.data != null) {
                 // Handle single image selection
                 data.data?.let { uri ->
-                    val savedImagePath = saveImageToInternalStorage(context, uri) // Save the image and get its path
+                    val savedImagePath = saveImageToInternalStorage(context, uri)
                     newImagePaths.add(savedImagePath)
                 }
             }
@@ -140,7 +114,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
         Spacer(modifier = Modifier.height(1.dp))
 
         Text(
-            text = "Add Property to List",
+            text = stringResource(R.string.add_property_header),
             fontSize = 20.sp,
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,7 +135,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
             OutlinedTextField(
                 value = address,
                 onValueChange = { address = it },
-                label = { Text("Address") },
+                label = { Text(stringResource(R.string.field_address)) },
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
@@ -169,7 +143,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
             OutlinedTextField(
                 value = leaseAvailability,
                 onValueChange = { leaseAvailability = it },
-                label = { Text("Lease Availability") },
+                label = { Text(stringResource(R.string.field_lease_availability)) },
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
@@ -177,7 +151,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
             OutlinedTextField(
                 value = price,
                 onValueChange = { price = it },
-                label = { Text("Price") },
+                label = { Text(stringResource(R.string.field_price)) },
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
@@ -185,7 +159,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.field_description)) },
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth()
@@ -200,20 +174,31 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
                 }
                 pickImagesLauncher.launch(pickImageIntent)
             }) {
-                Text(text = "Upload Image",
+                Text(text = stringResource(R.string.upload_image),
                     fontFamily = FontFamily.Monospace)
             }
             if(imageCount > 0){
-                Text(text = "$imageCount images uploaded!",
+                Text(text = stringResource(R.string.images_uploaded, imageCount),
                     fontFamily = FontFamily.Monospace)
             }
 
 
             Button(
                 onClick = {
+                    val parsedPrice = price.toIntOrNull()
+                    if (parsedPrice == null) {
+                        Toast.makeText(context, context.getString(R.string.invalid_price_error), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+                    val ownerIdSafe = userId.value?.hashCode() ?: 0
+                    if (userId.value.isNullOrBlank()) {
+                        Toast.makeText(context, context.getString(R.string.session_not_found), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
                     val propertyDetails =
-                        HouseEntity(ownerId = userId.value.toString().toInt(),
-                            price = price.toInt(),
+                        HouseEntity(ownerId = ownerIdSafe,
+                            ownerKey = userId.value.orEmpty(),
+                            price = parsedPrice,
                             address = address,
                             images = imagePaths.joinToString(","),
                             description =  description,
@@ -222,7 +207,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
                     coroutineScope.launch {
                             houseViewModel.addHouse(propertyDetails)
                     }
-                    Toast.makeText(context, "Added to Listing", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.listing_added_toast), Toast.LENGTH_LONG).show()
                     navController.navigate(ROUTE_MY_LISTINGS)
                 },
                 modifier = Modifier
@@ -230,7 +215,7 @@ fun AddProperty(navController: NavController, sharedViewModel: SharedViewModel) 
                     .fillMaxWidth()
                     .padding(horizontal = 50.dp)
             ) {
-                Text("Submit",
+                Text(stringResource(R.string.submit),
                     fontFamily = FontFamily.Monospace)
             }
         }

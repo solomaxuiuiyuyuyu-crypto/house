@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -69,34 +70,30 @@ fun AllListings(navController: NavController, sharedViewModel: SharedViewModel) 
 
     Log.println(Log.INFO, "", allHouses.toString())
     LaunchedEffect(key1 = true) {
-        // Simulate a network loading delay or wait for a real network call
-        delay(2000) // Remove this line if you are observing real data changes
+        delay(2000)
         isLoading = false
     }
     if (isLoading) {
-        LoadingPage("Fetching listings...")
+        LoadingPage(stringResource(R.string.loading_fetching_listings))
     } else {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
             if(allHouses.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(), // Fill the parent size to ensure the Box is as big as the screen
-                    contentAlignment = Alignment.Center // Align the content of the Box to the center
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No rentals available right now",
+                        text = stringResource(R.string.no_rentals_available),
                         fontSize = 24.sp,
                         fontFamily = FontFamily.Monospace
-                        // Additional Text styling here
                     )
                 }
-//                Text(text = "No rentals available right now")
             }
             else {
-                // Spacer to add some space between menu bar and list
                 Spacer(modifier = Modifier.height(1.dp))
                 Text(
-                    text = "All Listings",
+                    text = stringResource(R.string.all_listings_title),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
@@ -123,7 +120,11 @@ fun ScrollableListWithImagesAll(
             ImageListItemAll(
                 houseEntity = houseEntity,
                 onClick = {
-                    navController.navigate("$ROUTE_DETAILED_PROPERTY/${houseEntity.houseId}")
+                    val key = houseEntity.firebaseHouseId
+                    println("=== DEBUG: Navigating with key: $key")
+                    if (key.isNotBlank()) {
+                        navController.navigate("$ROUTE_DETAILED_PROPERTY/$key")
+                    }
                 }
             )
         }
@@ -134,7 +135,10 @@ fun ImageListItemAll(
     houseEntity: HouseEntity,
     onClick: () -> Unit
 ) {
-    val imagePaths = houseEntity.images.split(",").map { it.trim() }
+    val imagePaths = houseEntity.images
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -147,41 +151,43 @@ fun ImageListItemAll(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            LazyRow {
-                items(imagePaths) { imagePath ->
-                    Card(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .width(200.dp),
+            if (imagePaths.isNotEmpty()) {
+                LazyRow {
+                    items(imagePaths) { imagePath ->
+                        Card(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .width(200.dp),
 
-                        ) {
-                        val bitmap = loadBitmapFromFilePath(imagePath)
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "Property Image",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(250.dp)
-                                    .padding(4.dp)
-                            )
+                            ) {
+                            val bitmap = loadBitmapFromFilePath(imagePath)
+                            bitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                contentDescription = stringResource(R.string.property_image_content_description),
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier
+                                        .size(250.dp)
+                                        .padding(4.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = toAnnotatedText("Address:  ", houseEntity.address),
+                text = toAnnotatedText(stringResource(R.string.label_address_with_value), houseEntity.address),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Start
             )
             Text(
-                text = toAnnotatedText("Lease Available From:  ", houseEntity.lease),
+                text = toAnnotatedText(stringResource(R.string.label_lease_with_value), houseEntity.lease),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Start
             )
             Text(
-                text = toAnnotatedText("Price:  ", houseEntity.price.toString()),
+                text = toAnnotatedText(stringResource(R.string.label_price_with_value), houseEntity.price.toString()),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Start
             )

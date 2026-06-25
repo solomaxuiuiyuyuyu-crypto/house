@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -75,7 +76,8 @@ import kotlinx.coroutines.launch
 fun MyListings(navController: NavController, sharedViewModel: SharedViewModel) {
 
     val houseViewModel: HouseViewModel = viewModel()
-    val userId = sharedViewModel.userId.observeAsState().value.toString().toInt()
+    val userKey = sharedViewModel.userId.observeAsState().value.orEmpty()
+    val userId = userKey.hashCode()
     LaunchedEffect(key1 = userId) {
         houseViewModel.viewHousesByOwnerId(userId)
     }
@@ -91,7 +93,7 @@ fun MyListings(navController: NavController, sharedViewModel: SharedViewModel) {
     }
     //Each Property Card
     if (isLoading) {
-        LoadingPage("Fetching listings...")
+        LoadingPage(stringResource(R.string.loading_fetching_listings))
     }
     else {
 
@@ -99,7 +101,7 @@ fun MyListings(navController: NavController, sharedViewModel: SharedViewModel) {
             if (allHouses.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(1.dp))
                 Text(
-                    text = "My Listings",
+                    text = stringResource(R.string.my_listings_title),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
@@ -118,7 +120,7 @@ fun MyListings(navController: NavController, sharedViewModel: SharedViewModel) {
                     contentAlignment = Alignment.Center // Align the content of the Box to the center
                 ) {
                     Text(
-                        text = "No rentals posted yet!",
+                        text = stringResource(R.string.no_rentals_posted),
                         fontSize = 24.sp,
                         fontFamily = FontFamily.Monospace
                         // Additional Text styling here
@@ -146,7 +148,10 @@ fun ImageListItem(
 //            val trimmedImages = houseEntity.images.trimStart('[').trimEnd(']')
 //
 //            val imagesList: List<String> = trimmedImages.split(", ")
-    val imagePaths = houseEntity.images.split(",").map { it.trim() }
+    val imagePaths = houseEntity.images
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
 //            val painter: Painter = painterResource(id = houseEntity.images.toInt())
     val coroutineScope = rememberCoroutineScope()
 
@@ -175,7 +180,7 @@ fun ImageListItem(
                         bitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "Image",
+                                contentDescription = stringResource(R.string.generic_image_content_description),
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
                                     .size(250.dp)
@@ -195,60 +200,59 @@ fun ImageListItem(
                 TextField(
                     value = address,
                     onValueChange = { address = it },
-                    label = { Text("Address") })
+                    label = { Text(stringResource(R.string.field_address)) })
                 TextField(
                     value = leaseAvailability,
                     onValueChange = { leaseAvailability = it },
-                    label = { Text("Lease Availability") })
+                    label = { Text(stringResource(R.string.field_lease_availability)) })
                 TextField(
                     value = price,
                     onValueChange = { price = it},
-                    label = {Text("Price") })
+                    label = {Text(stringResource(R.string.field_price)) })
                 Button(onClick = {
+                    val parsedPrice = price.toIntOrNull() ?: houseEntity.price
                     onSaveClick(
                         //TODO EDIT OP
                         houseEntity.copy(
                             houseId = houseEntity.houseId,
                             address = address,
                             lease = leaseAvailability,
-                            price = price.toInt()
+                            price = parsedPrice
                         )
                     )
                     isEditing = false
                 }) {
-                    Text("Save",
+                    Text(stringResource(R.string.save_changes),
                         fontFamily = FontFamily.Monospace)
                 }
             } else {
                 // Display text with an edit button
                 Text(
-                    toAnnotatedText("Address:  ", address),
+                    toAnnotatedText(stringResource(R.string.label_address_with_value), address),
                     textAlign = TextAlign.Start,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    toAnnotatedText("Lease Available From:  ", leaseAvailability),
+                    toAnnotatedText(stringResource(R.string.label_lease_with_value), leaseAvailability),
                     textAlign = TextAlign.Start,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    toAnnotatedText("Price:  ", price),
+                    toAnnotatedText(stringResource(R.string.label_price_with_value), price),
                     textAlign = TextAlign.Start,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Row() {
                     IconButton(onClick = { isEditing = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                     }
                     IconButton(onClick = {
-                        //TODO DELETE OP
-                        coroutineScope.launch{
-                            houseViewModel.deleteHouse(houseEntity)
+                        coroutineScope.launch {
+                            houseViewModel.deleteHouse(houseEntity.houseId)  // ← передаём Int
+                            Toast.makeText(context, "Удаление...", Toast.LENGTH_SHORT).show()
                         }
-                        Toast.makeText(context, "Deleting your Listing..", Toast.LENGTH_LONG).show()
-
                     }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Edit")
+                        Icon(Icons.Default.Delete, contentDescription = "Удалить")
                     }
                 }
             }
@@ -272,28 +276,12 @@ fun ScrollableListWithImages(
                 onSaveClick = { updatedDetails ->
                     // Handle the save action, e.g., update the list or backend
                     coroutineScope.launch {
-                        houseViewModel.editHouse(updatedDetails)
+                      //  houseViewModel.editHouse(updatedDetails)
                     }
                     Log.d("EditProperty", "Saved: $updatedDetails")
                 }
             )
         }
-    }
-}
-fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
-    return try{
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            // For Android P and above
-            val source = ImageDecoder.createSource(context.contentResolver, uri)
-            ImageDecoder.decodeBitmap(source)
-        } else {
-            // For older versions
-            @Suppress("DEPRECATION")
-            MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-        }
-    } catch(e:Exception){
-        Log.e("MyApp", "Error loading image from URI: $uri", e)
-        null
     }
 }
 fun loadBitmapFromFilePath(filePath: String): Bitmap? {
@@ -305,9 +293,3 @@ fun loadBitmapFromFilePath(filePath: String): Bitmap? {
     }
 }
 
-//@Preview(showBackground = true)
-//@Composable
-//fun MyListingsPreview() {
-//    val navController = rememberNavController()
-//    MyListings(navController = navController, sharedViewModel = sharedViewModel)
-//}

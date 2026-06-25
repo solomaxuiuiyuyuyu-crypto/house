@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.house_rental_app.R
 import com.example.house_rental_app.data.HouseViewModel
 import com.example.house_rental_app.entity.HouseEntity
 import com.example.house_rental_app.navigation.ROUTE_CONTACT_LANDLORD
@@ -27,14 +29,17 @@ import com.example.house_rental_app.theme.screens.menuscreens.loadBitmapFromFile
 import com.example.house_rental_app.theme.screens.menuscreens.toAnnotatedText
 
 @Composable
-fun DetailedProperty(navController: NavController, houseId: Int) {
+fun DetailedProperty(navController: NavController, houseKey: String) {
 
     val houseViewModel: HouseViewModel = viewModel()
     val houseEntity by houseViewModel.viewedHouse.observeAsState()
-    LaunchedEffect(houseId) {
-        houseViewModel.getHouseById(houseId)
+    LaunchedEffect(houseKey) {
+        houseViewModel.getHouseByKey(houseKey)
     }
-    val imagePaths = houseEntity?.images?.split(",")?.map { it.trim() }
+    val imagePaths = houseEntity?.images
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotBlank() }
 
     Column(
         modifier = Modifier
@@ -44,15 +49,14 @@ fun DetailedProperty(navController: NavController, houseId: Int) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LazyRow{
-        // Show property image
-        if (imagePaths != null) {
+        if (!imagePaths.isNullOrEmpty()) {
 
             items(imagePaths) { imagePath ->
                 val bitmap = loadBitmapFromFilePath(imagePath)
                 bitmap?.let {
                     Image(
                         bitmap = it.asImageBitmap(),
-                        contentDescription = "Image",
+                        contentDescription = stringResource(R.string.generic_image_content_description),
                         modifier = Modifier
                             .height(200.dp)
                             .fillMaxWidth()
@@ -62,18 +66,29 @@ fun DetailedProperty(navController: NavController, houseId: Int) {
         }}
 
         // Show property details
-        Text(toAnnotatedText(text = "Address:  ", houseEntity?.address ?: ""), style = MaterialTheme.typography.labelLarge,)
-        Text(toAnnotatedText(text = "Lease Availability: ", houseEntity?.lease?:""), style = MaterialTheme.typography.labelLarge,)
-        Text(toAnnotatedText(text = "Price: ", houseEntity?.price.toString() ?: "0"), style = MaterialTheme.typography.labelLarge,)
-        Text(toAnnotatedText(text = "Description:  ", houseEntity?.description ?: ""), style = MaterialTheme.typography.labelLarge,)
+        Text(toAnnotatedText(text = stringResource(R.string.label_address_with_value), houseEntity?.address ?: ""), style = MaterialTheme.typography.labelLarge,)
+        Text(toAnnotatedText(text = stringResource(R.string.label_lease_with_value), houseEntity?.lease?:""), style = MaterialTheme.typography.labelLarge,)
+        Text(toAnnotatedText(text = stringResource(R.string.label_price_with_value), houseEntity?.price.toString() ?: "0"), style = MaterialTheme.typography.labelLarge,)
+        Text(toAnnotatedText(text = stringResource(R.string.label_description_with_value), houseEntity?.description ?: ""), style = MaterialTheme.typography.labelLarge,)
 
         // Button to contact landlord
         Button(onClick = {
-            // Ensure ownerId is present. Replace '0' with a sensible default or handle the case where ownerId is null.
-            val ownerId = houseEntity?.ownerId ?: 0
-            navController.navigate("$ROUTE_CONTACT_LANDLORD/$ownerId")
+            val ownerKey = houseEntity?.ownerKey.orEmpty()
+            println("=== DEBUG: ownerKey = '$ownerKey'")  // ← Добавь лог
+            println("=== DEBUG: houseEntity = $houseEntity")  // ← Добавь лог
+
+            if (ownerKey.isNotBlank()) {
+                navController.navigate("$ROUTE_CONTACT_LANDLORD/$ownerKey")
+            } else {
+                // Покажи Toast об ошибке
+                android.widget.Toast.makeText(
+                    navController.context,
+                    "Ошибка: данные арендодателя не найдены",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
         }) {
-            Text("Contact Landlord")
+            Text(stringResource(R.string.contact_landlord_button))
         }
     }
 }

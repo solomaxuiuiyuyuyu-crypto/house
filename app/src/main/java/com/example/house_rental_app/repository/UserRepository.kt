@@ -15,16 +15,18 @@ interface UserRepository {
         }
     }
 
-    suspend fun userLogin(emailId: String, password: String): Int{
+    suspend fun userLogin(email: String, password: String): Int{  // ИЗМЕНИТЕ на email
         return withContext(Dispatchers.IO) {
-            userDao.userLogin(emailId, password)
+            userDao.userLogin(email, password)  // ИЗМЕНИТЕ на email
         }
     }
+
     suspend fun fetchUserById(userId: Int): UserEntity {
         return withContext(Dispatchers.IO) {
             userDao.fetchUserById(userId)
         }
     }
+
     suspend fun updateUser(user: UserEntity){
         withContext(Dispatchers.IO) {
             userDao.updateUser(user)

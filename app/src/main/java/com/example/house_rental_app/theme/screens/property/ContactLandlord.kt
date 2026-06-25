@@ -1,98 +1,167 @@
 package com.example.house_rental_app.theme.screens.property
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.house_rental_app.R
 import com.example.house_rental_app.data.UserViewModel
-import com.example.house_rental_app.entity.HouseEntity
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactLandlord(navController: NavController, ownerId: Int) {
-    val context = LocalContext.current
-
+fun ContactLandlord(
+    navController: NavController,
+    ownerKey: String
+) {
     val userViewModel: UserViewModel = viewModel()
-    LaunchedEffect(ownerId) {
-        ownerId.let {
-            userViewModel.fetchUserById(it)
-        }
+    val landlordDetails = userViewModel.userDetails.value
+    var messageText by remember { mutableStateOf("") }
+    var showSuccessMessage by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // Загружаем данные арендодателя
+    LaunchedEffect(ownerKey) {
+        isLoading = true
+        userViewModel.fetchUserById(ownerKey)
+        delay(500)
+        isLoading = false
     }
-    val userDetails by userViewModel.userDetails.observeAsState()
 
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Contact Landlord", style = MaterialTheme.typography.headlineMedium,
-            fontFamily = FontFamily.Monospace)
-        Spacer(modifier = Modifier.height(25.dp))
-
-
-        val email = userDetails?.emailId
-        val phoneNumber = userDetails?.phoneNumber
-        // Email
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable {
-                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$email"))
-                context.startActivity(intent)
-            }
-        ) {
-            Icon(Icons.Default.Email, "Email", Modifier.size(30.dp))
-            Spacer(Modifier.width(8.dp))
-            if (email != null) {
-                Text(email, style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = FontFamily.Monospace)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Phone
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable {
-                val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-                    data = Uri.parse("tel:$phoneNumber")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.contact_landlord_title)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
                 }
-                context.startActivity(dialIntent)
-            }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(Icons.Default.Phone, contentDescription = "Phone", modifier = Modifier.size(30.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            if (phoneNumber != null) {
-                Text(phoneNumber, style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = FontFamily.Monospace)
+            // Информация об арендодателе
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.landlord_info),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else if (landlordDetails != null) {
+                        Text(
+                            text = "${stringResource(R.string.name)}: ${landlordDetails.username}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        if (landlordDetails.showOnlyEmail) {
+                            Text(
+                                text = "${stringResource(R.string.email)}: ${landlordDetails.email}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        if (landlordDetails.showOnlyPhone) {
+                            Text(
+                                text = "${stringResource(R.string.phone)}: ${landlordDetails.phoneNumber}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        if (!landlordDetails.showOnlyEmail && !landlordDetails.showOnlyPhone) {
+                            Text(
+                                text = stringResource(R.string.contact_hidden),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.landlord_not_found),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            // Поле для сообщения - убрали minLines и maxLines
+            TextField(
+                value = messageText,
+                onValueChange = { messageText = it },
+                label = { Text(stringResource(R.string.message_hint)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Кнопка отправки
+            Button(
+                onClick = {
+                    showSuccessMessage = true
+                    messageText = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = messageText.isNotBlank() && landlordDetails != null && !isLoading
+            ) {
+                Text(stringResource(R.string.send_message))
+            }
+
+            // Сообщение об успехе
+            if (showSuccessMessage) {
+                LaunchedEffect(Unit) {
+                    delay(2000)
+                    showSuccessMessage = false
+                }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.message_sent),
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
         }
-
     }
 }
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun ContactLandLordPreview() {
-//    val navController = rememberNavController()
-//    ContactLandlord(navController,  HouseEntity( address = "111 Main St", price = 234, ownerId = 23, lease = "April 1st 2022", images = "img_2", description = "A 2 bedroom" ),)
-//}

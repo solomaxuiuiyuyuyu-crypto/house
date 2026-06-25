@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "576426096063",
+    "firebase_url": "https://houserentalapp-ad6e3-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "houserentalapp-ad6e3",
+    "storage_bucket": "houserentalapp-ad6e3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576426096063:android:c3abcd54f4b52431009d0a",
+        "android_client_info": {
+          "package_name": "com.example.house_rental_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUiO0JEKezWq9iPSuP-OEj2fWHS5YjESw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

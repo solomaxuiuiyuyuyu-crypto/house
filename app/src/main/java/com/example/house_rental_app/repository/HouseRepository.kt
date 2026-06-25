@@ -1,15 +1,12 @@
 package com.example.house_rental_app.repository
 
-import android.content.Context
 import com.example.house_rental_app.dao.HouseDao
-import com.example.house_rental_app.database.UserDatabase
 import com.example.house_rental_app.entity.HouseEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
 interface HouseRepository {
-
     val houseDao: HouseDao
 
     suspend fun addHouse(house: HouseEntity) {
@@ -35,13 +32,21 @@ interface HouseRepository {
             houseDao.editHouse(house)
         }
     }
+
     suspend fun viewAllHouses(): Flow<List<HouseEntity>>{
         return withContext(Dispatchers.IO){
             houseDao.viewAllHouses()
         }
     }
-    suspend fun getHouseById(houseId: Int): HouseEntity
 
+    suspend fun getHouseById(houseId: Int): HouseEntity {
+        return withContext(Dispatchers.IO) {
+            houseDao.getHouseById(houseId)
+        }
+    }
 
-    // You can define other functions for house-related operations here
+    suspend fun getHouseByKey(houseKey: String): HouseEntity {
+        val numeric = houseKey.toIntOrNull() ?: throw IllegalArgumentException("House key is not numeric")
+        return getHouseById(numeric)
+    }
 }

@@ -13,7 +13,6 @@ abstract class UserDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
     abstract fun houseDao(): HouseDao
-    // Define functions for other DAOs if needed
 
     companion object {
         @Volatile

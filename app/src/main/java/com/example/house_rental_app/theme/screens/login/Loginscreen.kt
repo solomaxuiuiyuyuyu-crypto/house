@@ -1,227 +1,193 @@
 package com.example.house_rental_app.theme.screens.login
 
 import android.util.Log
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.example.house_rental_app.navigation.ROUTE_REGISTER
-import com.example.house_rental_app.R
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import com.example.house_rental_app.data.AppViewModelProvider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.house_rental_app.R
 import com.example.house_rental_app.data.SharedViewModel
 import com.example.house_rental_app.data.UserViewModel
-import kotlinx.coroutines.launch
-
 import com.example.house_rental_app.navigation.ROUTE_ALL_LISTINGS
-import com.example.house_rental_app.theme.screens.ErrorPopup
+import com.example.house_rental_app.navigation.ROUTE_REGISTER
+import com.example.house_rental_app.utils.ValidationUtils
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Loginscreen(navController: NavHostController, sharedViewModel: SharedViewModel) {
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var pass by remember { mutableStateOf(TextFieldValue("")) }
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val userViewModel: UserViewModel = viewModel(factory = AppViewModelProvider.Factory)
-    val user by userViewModel.currentUser.observeAsState()
-    val loginError by userViewModel.error.observeAsState()
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var loginAttempted by remember { mutableStateOf(false) }
-//    val currentUserId by rememberUpdatedState(sharedViewModel.userId.value)
-    var error by remember { mutableStateOf(false) }
-    var id by remember { mutableStateOf(0) }
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Background Image
-        Image(painter = painterResource(id = R.drawable.img), contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(0.7f), contentScale = ContentScale.FillHeight,
-            alignment = Alignment.Center)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(top = 20.dp)
-        ) {
-            Spacer(modifier = Modifier.height(50.dp))
-            val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.animation_lmz7yxkm))
-            val progress by animateLottieCompositionAsState(composition)
+fun Loginscreen(
+    navController: NavController,
+    sharedViewModel: SharedViewModel
+) {
+    val userViewModel: UserViewModel = viewModel()
+    val currentUser by userViewModel.currentUser.observeAsState()
+    val error by userViewModel.error.observeAsState()
 
-            LottieAnimation(
-                composition, progress,
-                modifier = Modifier.size(50.dp)
-            )
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Welcome!",
-                color = Color.Black,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 30.sp,
-                modifier = Modifier.padding(10.dp)
-            )
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
+    // Состояния для ошибок валидации
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var generalError by remember { mutableStateOf<String?>(null) }
 
-            Spacer(modifier = Modifier.height(130.dp))
+    var isLoading by remember { mutableStateOf(false) }
 
-            OutlinedTextField(value = email, onValueChange = { email = it },
-                label = { Text(text = "Enter Email") },
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-                colors = TextFieldDefaults.run {
-                    textFieldColors(
-                        textColor = Color.Black,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                },
-                leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = "") }
-            )
-
-//        Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(value = pass, onValueChange = { pass = it },
-                label = { Text(text = "Enter password") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-                colors = TextFieldDefaults.run {
-                    textFieldColors(
-                        textColor = Color.Black,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                },
-                leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = "") }
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        userViewModel.loginUser(email.text.trim(), pass.text.trim())
-                        error = true
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 50.dp)
-            ) {
-                Text(text = "Log In",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold)
-
-            }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = {
-                    navController.navigate(ROUTE_REGISTER)
-                },
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 37.dp)
-            ) {
-                Text(text = "Click here to Register", fontSize = 15.sp,
-                    fontFamily = FontFamily.Monospace,fontWeight = FontWeight.Bold)
-
-
-            }
-        }
-        if (error && loginError == true) {
-            showErrorDialog = true
-        }
-        if(showErrorDialog){
-            ErrorPopup(
-                message = "Login Failed",
-                description = "Invalid email or password. Please login again!",
-                onDismiss = { showErrorDialog = false
-                error = false
+    LaunchedEffect(currentUser) {
+        Log.d("LoginScreen", "currentUser changed: $currentUser")
+        if (currentUser != null) {
+            isLoading = false
+            sharedViewModel.setUserId(currentUser!!)
+            Log.d("LoginScreen", "Navigating to home with userId: ${currentUser}")
+            navController.navigate(ROUTE_ALL_LISTINGS) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    inclusive = true
                 }
-            )
+                launchSingleTop = true
+            }
         }
-
-
     }
-        LaunchedEffect(user) {
 
-                user?.let {
-                    Log.println(
-                        Log.INFO,
-                        "Navigation",
-                        "Navigating to ROUTE_ALL_LISTINGS with User ID: $it"
+    LaunchedEffect(error) {
+        Log.d("LoginScreen", "error changed: $error")
+        if (error == true) {
+            isLoading = false
+            generalError = "Неверный email или пароль"
+            // Сбрасываем ошибку через 3 секунды
+            delay(3000)
+            generalError = null
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(R.string.login_title),
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Общая ошибка
+        if (generalError != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = generalError!!,
+                    modifier = Modifier.padding(8.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Поле email
+        OutlinedTextField(
+            value = email,
+            onValueChange = {
+                email = it
+                emailError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.email)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = emailError != null,
+            supportingText = {
+                if (emailError != null) {
+                    Text(
+                        text = emailError!!,
+                        color = MaterialTheme.colorScheme.error
                     )
-                    sharedViewModel.setUserId(it.toString())
-                    navController.navigate(ROUTE_ALL_LISTINGS) // Adjust based on your user ID type
+                }
+            },
+            enabled = !isLoading
+        )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Поле пароля
+        OutlinedTextField(
+            value = password,
+            onValueChange = {
+                password = it
+                passwordError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.password)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = passwordError != null,
+            supportingText = {
+                if (passwordError != null) {
+                    Text(
+                        text = passwordError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            enabled = !isLoading
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Кнопка входа
+        Button(
+            onClick = {
+                Log.d("LoginScreen", "Login button clicked with email: $email")
+
+                // Валидация
+                val validationResult = ValidationUtils.validateLogin(email, password)
+
+                if (!validationResult.isValid) {
+                    when {
+                        email.isEmpty() || !ValidationUtils.isValidEmail(email) -> emailError = validationResult.errorMessage
+                        password.isEmpty() -> passwordError = validationResult.errorMessage
+                    }
+                    return@Button
                 }
 
+                isLoading = true
+                userViewModel.loginUser(email, password)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
             }
-            loginAttempted = false // Reset login attempted state
+            Text(stringResource(R.string.login_button))
+        }
 
+        Spacer(modifier = Modifier.height(16.dp))
 
+        TextButton(
+            onClick = {
+                navController.navigate(ROUTE_REGISTER)
+            },
+            enabled = !isLoading
+        ) {
+            Text(stringResource(R.string.no_account))
+        }
+    }
 }
-
-//@Preview
-//@Composable
-//fun LoginscreePreview(){
-//    val sharedViewModel =
-//    Loginscreen(rememberNavController(), sharedViewModel)
-//}

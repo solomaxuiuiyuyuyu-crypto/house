@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Общие строки -->
+    <string name="app_name">Аренда жилья</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+    <string name="edit">Редактировать</string>
+    <string name="delete">Удалить</string>
+    <string name="back">Назад</string>
+    <string name="loading">Загрузка...</string>
+    <string name="error">Ошибка</string>
+    <string name="success">Успешно</string>
+
+    <!-- Экран входа -->
+    <string name="login_title">Вход</string>
+    <string name="email">Email</string>
+    <string name="password">Пароль</string>
+    <string name="login_button">Войти</string>
+    <string name="no_account">Нет аккаунта? Зарегистрироваться</string>
+    <string name="login_error">Неверный email или пароль</string>
+
+    <!-- Экран регистрации -->
+    <string name="register_title">Регистрация</string>
+    <string name="username">Имя пользователя</string>
+    <string name="phone">Телефон</string>
+    <string name="register_button">Зарегистрироваться</string>
+    <string name="have_account">Уже есть аккаунт? Войти</string>
+    <string name="register_error">Ошибка регистрации</string>
+
+    <!-- Главный экран -->
+    <string name="home_title">Главная</string>
+    <string name="welcome">Добро пожаловать!</string>
+    <string name="home_tagline">Ищите жильё в аренду или размещайте своё объявление.</string>
+    <string name="home_main_menu">Главное меню</string>
+    <string name="home_menu_hint">Войдите или зарегистрируйтесь, чтобы открыть объявления, карту, профиль и настройки.</string>
+
+    <!-- Меню -->
+    <string name="menu_all_listings">Все объявления</string>
+    <string name="menu_my_listings">Мои объявления</string>
+    <string name="menu_add_property">Добавить объявление</string>
+    <string name="menu_map">Карта</string>
+    <string name="menu_profile">Профиль</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_logout">Выйти</string>
+
+    <!-- Профиль -->
+    <string name="profile_title">Профиль</string>
+    <string name="profile_username">Имя пользователя</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_phone">Телефон</string>
+    <string name="profile_edit">Редактировать профиль</string>
+    <string name="profile_save">Сохранить изменения</string>
+    <string name="username_with_value">Имя пользователя: %1$s</string>
+    <string name="email_with_value">Email: %1$s</string>
+    <string name="phone_with_value">Телефон: %1$s</string>
+    <string name="not_available">Нет данных</string>
+
+    <!-- Объявления -->
+    <string name="add_property_title">Добавить объявление</string>
+    <string name="property_address">Адрес</string>
+    <string name="property_price">Цена</string>
+    <string name="property_rooms">Комнаты</string>
+    <string name="property_description">Описание</string>
+    <string name="property_images">Изображения</string>
+    <string name="property_lease_availability">Доступность аренды</string>
+    <string name="add_property_button">Добавить объявление</string>
+
+    <!-- Контакт с арендодателем -->
+    <string name="contact_landlord_title">Связаться с арендодателем</string>
+    <string name="landlord_info">Информация об арендодателе</string>
+    <string name="name">Имя</string>
+    <string name="message_hint">Ваше сообщение</string>
+    <string name="send_message">Отправить сообщение</string>
+    <string name="message_sent">Сообщение отправлено!</string>
+    <string name="contact_hidden">Контактная информация скрыта арендодателем</string>
+    <string name="landlord_not_found">Арендодатель не найден</string>
+    <string name="map_title">Карта объектов</string>
+    <string name="map_hint">Перемещайте карту и масштабируйте двумя пальцами</string>
+    <string name="yandex_map_key_missing">Добавьте ключ Яндекс MapKit в AndroidManifest</string>
+    <string name="map_init_error">Карта временно недоступна на этом устройстве</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_theme">Оформление</string>
+    <string name="settings_dark_mode">Темная тема</string>
+    <string name="settings_language">Язык приложения</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_language_en">English</string>
+    <string name="loading_fetching_listings">Загружаем объявления...</string>
+    <string name="my_listings_title">Мои объявления</string>
+    <string name="all_listings_title">Все объявления</string>
+    <string name="no_rentals_posted">У вас пока нет объявлений</string>
+    <string name="no_rentals_available">Сейчас нет доступных объявлений</string>
+    <string name="generic_image_content_description">Изображение</string>
+    <string name="property_image_content_description">Фото объявления</string>
+    <string name="field_address">Адрес</string>
+    <string name="field_lease_availability">Доступность аренды</string>
+    <string name="field_price">Цена</string>
+    <string name="field_description">Описание</string>
+    <string name="label_address_with_value">Адрес: </string>
+    <string name="label_lease_with_value">Доступно с: </string>
+    <string name="label_price_with_value">Цена: </string>
+    <string name="label_description_with_value">Описание: </string>
+    <string name="save_changes">Сохранить</string>
+    <string name="deleting_listing_toast">Удаляем объявление...</string>
+    <string name="add_property_header">Добавить объявление</string>
+    <string name="upload_image">Загрузить фото</string>
+    <string name="images_uploaded">Загружено фото: %1$d</string>
+    <string name="invalid_price_error">Введите корректную цену</string>
+    <string name="session_not_found">Сессия не найдена, войдите заново</string>
+    <string name="listing_added_toast">Объявление добавлено</string>
+    <string name="submit">Опубликовать</string>
+    <string name="contact_landlord_button">Связаться с арендодателем</string>
+</resources>

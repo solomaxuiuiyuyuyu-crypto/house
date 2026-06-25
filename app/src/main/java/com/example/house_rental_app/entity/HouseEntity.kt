@@ -3,22 +3,30 @@ package com.example.house_rental_app.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "house_table",
+@Entity(
+    tableName = "house_table",
     foreignKeys = [ForeignKey(
         entity = UserEntity::class,
         parentColumns = ["id"],
         childColumns = ["ownerId"],
-        onDelete = ForeignKey.CASCADE // Define onDelete behavior as needed
-    )])
+        onDelete = ForeignKey.CASCADE
+    )]
+)
 data class HouseEntity(
-
-    @PrimaryKey(autoGenerate = true) val houseId: Int = 0,
-    @ColumnInfo(name = "ownerId") val ownerId: Int,
-    @ColumnInfo(name = "price") val price: Int,
-    @ColumnInfo(name= "address") val address: String, //TODO: Change to Address
-    @ColumnInfo(name = "images") val images: String,
-    @ColumnInfo(name = "lease") val lease: String,
-    @ColumnInfo(name = "description") val description: String,
+    @PrimaryKey(autoGenerate = true)
+    var houseId: Int = 0,
+    var ownerId: Int = 0,
+    @Ignore var firebaseHouseId: String = "",
+    @Ignore var ownerKey: String = "",
+    var price: Int = 0,
+    var address: String = "",
+    var images: String = "",
+    var lease: String = "",
+    var description: String = "",
+    var isAvailable: Boolean = true,
+    var createdAt: String? = null,
+    var updatedAt: String? = null
 )

@@ -1,251 +1,335 @@
 package com.example.house_rental_app.theme.screens.Register
 
-import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import android.util.Log
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.navigation.NavController
 import com.example.house_rental_app.R
-import com.example.house_rental_app.data.AppViewModelProvider
-import com.example.house_rental_app.data.UserDetails
 import com.example.house_rental_app.data.UserViewModel
 import com.example.house_rental_app.entity.UserEntity
 import com.example.house_rental_app.navigation.ROUTE_LOGIN
-import kotlinx.coroutines.launch
+import com.example.house_rental_app.utils.ValidationUtils
+import kotlinx.coroutines.delay  // ← ДОБАВИТЬ ЭТУ СТРОКУ
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavHostController){
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var pass by remember { mutableStateOf(TextFieldValue("")) }
-    var confirmpass by remember { mutableStateOf(TextFieldValue("")) }
-    var isHomeRenter by remember { mutableStateOf(false) }
-    var isHomeOwner by remember { mutableStateOf(false) }
-    var context= LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val userViewModel: UserViewModel = viewModel(factory = AppViewModelProvider.Factory)
-    val onChange = userViewModel :: updateUserUiState
-    val itemUiState = userViewModel.userUiState
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(top=20.dp)
-    ){
-        Spacer(modifier = Modifier.height(50.dp))
-        val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.animation_lmrmwnsa))
-        val progress by animateLottieCompositionAsState(composition )
+fun RegisterScreen(
+    navController: NavController
+) {
+    val userViewModel: UserViewModel = viewModel()
+    val error by userViewModel.error.observeAsState()
 
-        LottieAnimation(composition , progress,
-            modifier =Modifier.size(50.dp))
-    }
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
 
+    // Состояния для ошибок валидации
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+    var phoneError by remember { mutableStateOf<String?>(null) }
+    var generalError by remember { mutableStateOf<String?>(null) }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Background Image
-        Image(
-            painter = painterResource(id = R.drawable.img_2), contentDescription = null,
-            modifier = Modifier.fillMaxSize().alpha(0.6f), contentScale = ContentScale.FillHeight,
-            alignment = Alignment.Center
-        )
+    var isLoading by remember { mutableStateOf(false) }
+    var registrationSuccess by remember { mutableStateOf(false) }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Register Here!",
-                color = Color.Black,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 30.sp,
-                modifier = Modifier.padding(20.dp)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(value = email,
-                onValueChange = {
-                    email = it
-//                    itemUiState.copy(email = it)
-                                },
-                label = { Text(text = "Enter Email") },
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp)
-                    ,
-                colors = TextFieldDefaults.run {
-                    textFieldColors(
-                        textColor = Color.Black,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                },
-                singleLine = true,
-                leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = "") }
-            )
+    // Обработка успешной регистрации
+    LaunchedEffect(error) {
+        Log.d("RegisterScreen", "error changed: $error, isLoading: $isLoading")
 
-//            Spacer(modifier = Modifier.height(20.dp))
+        if (error == false && isLoading) {
+            // Успешная регистрация
+            Log.d("RegisterScreen", "Registration successful!")
+            registrationSuccess = true
+            isLoading = false
 
-            OutlinedTextField(value = pass, onValueChange = { pass = it },
-                label = { Text(text = "Enter password") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-                colors = TextFieldDefaults.run {
-                    textFieldColors(
-                        textColor = Color.Black,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                },
-                singleLine = true,
-
-                leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = "") }
-            )
-//            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(value = confirmpass, onValueChange = { confirmpass = it },
-                label = { Text(text = "Confirm password") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-                colors = TextFieldDefaults.run {
-                    textFieldColors(
-                        textColor = Color.Black,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                },
-                singleLine = true,
-                leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = "") }
-            )
-
-
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(all = 16.dp).background(Color.White)
-            ) {
-                Text(
-                    text = "You are a ",
-                    modifier = Modifier.padding(all = 10.dp),
-                    fontFamily = FontFamily.Monospace
-                )
-
-                Checkbox(
-                    checked = isHomeRenter,
-                    onCheckedChange = { isHomeRenter = it }
-                )
-                Text(
-                    text = "Home Renter",
-                    modifier = Modifier.clickable { isHomeRenter = !isHomeRenter },
-                    fontFamily = FontFamily.Monospace
-                )
-
-                Checkbox(
-                    checked = isHomeOwner,
-                    onCheckedChange = { isHomeOwner = it }
-                )
-                Text(
-                    text = "Home Owner ",
-                    modifier = Modifier.clickable { isHomeOwner = !isHomeOwner },
-                    fontFamily = FontFamily.Monospace
-                )
+            // Ждём 2 секунды и переходим на экран входа
+            delay(2000)
+            Log.d("RegisterScreen", "Navigating to login screen")
+            navController.navigate(ROUTE_LOGIN) {
+                popUpTo(ROUTE_LOGIN) { inclusive = true }
+                launchSingleTop = true
             }
-
-
-            Button(
-                onClick = {
-                    itemUiState.copy(userDetails = UserDetails(username = "", email=email.text.trim(), password=pass.text.trim() ))
-
-                    val user = toUserEntity(email.text.trim(), pass.text.trim(), confirmpass.text.trim())
-                    coroutineScope.launch {
-                        userViewModel.registerUser(user)
-                        Toast.makeText(context, "Registration Complete", Toast.LENGTH_LONG).show()
-                        navController.navigate(ROUTE_LOGIN)
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 50.dp)
-            ) {
-                Text(text = "Register",
-                    fontFamily = FontFamily.Monospace)
-
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            Button(
-                onClick = {
-                    navController.navigate(ROUTE_LOGIN)
-                },
-                colors = ButtonDefaults.buttonColors(Color.Black)
-            ) {
-                Text(text = "Already have an Account? Click to Login",
-                    fontFamily = FontFamily.Monospace)
-
-            }
+        } else if (error == true && isLoading) {
+            // Ошибка регистрации
+            Log.d("RegisterScreen", "Registration failed!")
+            isLoading = false
+            generalError = "Ошибка регистрации. Возможно, пользователь с таким email уже существует"
+            delay(3000)
+            generalError = null
         }
     }
 
-}
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(R.string.register_title),
+            style = MaterialTheme.typography.headlineMedium
+        )
 
-fun toUserEntity(email: String, password: String, confirmPassword: String): UserEntity {
-    return UserEntity(0,"",password,email, "",true, true)
-}
+        Spacer(modifier = Modifier.height(32.dp))
 
-@Preview
-@Composable
-fun Registerpage(){
-    RegisterScreen(rememberNavController())
-}
+        // Сообщение об успешной регистрации
+        if (registrationSuccess) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Регистрация успешна!",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "Перенаправление на вход...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
+        // Общая ошибка
+        if (generalError != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = generalError!!,
+                    modifier = Modifier.padding(8.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Поле имени пользователя
+        OutlinedTextField(
+            value = username,
+            onValueChange = {
+                username = it
+                usernameError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.username)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = usernameError != null,
+            supportingText = {
+                if (usernameError != null) {
+                    Text(
+                        text = usernameError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            enabled = !isLoading && !registrationSuccess
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Поле email
+        OutlinedTextField(
+            value = email,
+            onValueChange = {
+                email = it
+                emailError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.email)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = emailError != null,
+            supportingText = {
+                if (emailError != null) {
+                    Text(
+                        text = emailError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            enabled = !isLoading && !registrationSuccess
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Поле пароля
+        OutlinedTextField(
+            value = password,
+            onValueChange = {
+                password = it
+                passwordError = null
+                confirmPasswordError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.password)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = passwordError != null,
+            supportingText = {
+                if (passwordError != null) {
+                    Text(
+                        text = passwordError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    Text(
+                        text = "Минимум 6 символов, хотя бы одна буква и одна цифра",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            enabled = !isLoading && !registrationSuccess
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Поле подтверждения пароля
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = {
+                confirmPassword = it
+                confirmPasswordError = null
+                generalError = null
+            },
+            label = { Text("Подтвердите пароль") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = confirmPasswordError != null,
+            supportingText = {
+                if (confirmPasswordError != null) {
+                    Text(
+                        text = confirmPasswordError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            enabled = !isLoading && !registrationSuccess
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Поле телефона
+        OutlinedTextField(
+            value = phone,
+            onValueChange = {
+                phone = it
+                phoneError = null
+                generalError = null
+            },
+            label = { Text(stringResource(R.string.phone)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = phoneError != null,
+            supportingText = {
+                if (phoneError != null) {
+                    Text(
+                        text = phoneError!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            enabled = !isLoading && !registrationSuccess
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Кнопка регистрации
+        Button(
+            onClick = {
+                Log.d("RegisterScreen", "Register button clicked")
+
+                // Комплексная валидация
+                val validationResult = ValidationUtils.validateRegistration(
+                    username = username,
+                    email = email,
+                    password = password,
+                    confirmPassword = confirmPassword,
+                    phoneNumber = phone
+                )
+
+                if (!validationResult.isValid) {
+                    generalError = validationResult.errorMessage
+                    if (ValidationUtils.isValidUsername(username).errorMessage != null) {
+                        usernameError = ValidationUtils.isValidUsername(username).errorMessage
+                    }
+                    if (!ValidationUtils.isValidEmail(email)) {
+                        emailError = "Введите корректный email адрес"
+                    }
+                    if (ValidationUtils.isValidPassword(password).errorMessage != null) {
+                        passwordError = ValidationUtils.isValidPassword(password).errorMessage
+                    }
+                    if (ValidationUtils.doPasswordsMatch(password, confirmPassword).errorMessage != null) {
+                        confirmPasswordError = ValidationUtils.doPasswordsMatch(password, confirmPassword).errorMessage
+                    }
+                    if (ValidationUtils.isValidPhoneNumber(phone).errorMessage != null) {
+                        phoneError = ValidationUtils.isValidPhoneNumber(phone).errorMessage
+                    }
+                    return@Button
+                }
+
+                isLoading = true
+                val user = UserEntity(
+                    username = username,
+                    email = email,
+                    password = password,
+                    phoneNumber = phone
+                )
+                userViewModel.registerUser(user)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading && !registrationSuccess
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(stringResource(R.string.register_button))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(
+            onClick = {
+                navController.navigate(ROUTE_LOGIN)
+            },
+            enabled = !isLoading
+        ) {
+            Text(stringResource(R.string.have_account))
+        }
+    }
+}
